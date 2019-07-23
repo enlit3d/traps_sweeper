@@ -1,0 +1,120 @@
+#include "font.h"
+#include "SDL_ttf.h"
+#include "src/engine/environ/conversions.h"
+
+#include "../misc/color.h"
+
+#include <cassert>
+#include <iostream>
+
+namespace engine::render {
+	
+	struct FontSrc::Impl {
+		Impl(str_ref path) : 
+			//fileSrc(readFile(path)), 
+			filePath(path)
+		{}
+		/*
+	private:
+		std::shared_ptr<SDL_RWops> readFile(str_ref path) {
+			SDL_RWops* p = SDL_RWFromFile(path.c_str(), "rb");
+			assert(p != nullptr);
+			return std::shared_ptr<SDL_RWops>(p, [](SDL_RWops* ptr) {
+				SDL_RWclose(ptr);
+				std::cout << "closed FontSrc file \n";
+			});
+		}*/
+	public:
+		//std::shared_ptr<SDL_RWops> fileSrc;
+		str_t filePath = "";
+	};
+
+	FontSrc::FontSrc(str_ref filePath)
+		: _impl(std::make_unique<Impl>(filePath))
+	{}
+	FontSrc::~FontSrc() = default;
+
+	FontSrc::FontSrc(FontSrc&&) noexcept = default;
+
+	FontSrc& FontSrc::operator=(FontSrc&&) = default;
+
+	struct Font::Impl {
+		Impl(TTF_Font* font, i32 pointSize) 
+			: ttfFont(font)
+		{
+			fontSize = pointSize;
+			maxHeight = TTF_FontHeight(ttfFont);
+		}
+		~Impl() {
+			TTF_CloseFont(ttfFont);
+			ttfFont = nullptr;
+		}
+		ImageData renderGlyph(Letter input, const Color& color) const {
+			TTF_SetFontKerning(ttfFont, 0);
+			auto rgba = color.getRGBA();
+			auto surf = TTF_RenderUTF8_Blended(ttfFont, input, SDL_Color{ rgba[0], rgba[1], rgba[2], rgba[3] });
+			assert(surf);
+			return env::conversions::toImageDataAndDelete(surf);
+		}
+	public:
+		TTF_Font* ttfFont;
+		//std::shared_ptr<SDL_RWops> sharedSrc = nullptr;
+		i32 fontSize = 0;
+		i32 maxHeight = 0;
+	};
+
+	Font::Font(const FontSrc& fontSrc, i32 pointSize)
+	{
+		if (!TTF_WasInit()) {
+			auto err = TTF_Init();
+			if (err) { throw; }
+		}
+
+		TTF_Font* font = TTF_OpenFont(fontSrc._impl->filePath.c_str(), pointSize);
+		if (font == nullptr) {
+			std::cout << TTF_GetError() << "\n";
+			assert(font != nullptr);
+		}
+		_impl = std::make_unique<Impl>(font, pointSize);
+
+		return;
+		/*
+		if (!TTF_WasInit()) {
+			auto err = TTF_Init();
+			if (err) { throw; }
+		}
+		SDL_RWops* p = fontSrc._impl->fileSrc.get();
+		TTF_Font* font = TTF_OpenFontRW(p, 0, pointSize);
+		if (font == nullptr) {
+			std::cout << TTF_GetError() << "\n";
+			assert(font != nullptr);
+		}
+		
+		_impl = std::make_unique<Impl>(font, pointSize);
+		_impl->sharedSrc = fontSrc._impl->fileSrc;
+		*/
+	}
+
+	Font::Font(str_ref filePath, i32 pointSize)
+	{
+		if (!TTF_WasInit()) {
+			auto err = TTF_Init();
+			if (err) { throw; }
+		}
+		TTF_Font* font = TTF_OpenFont(filePath.c_str(), pointSize);
+		std::cout << TTF_GetError();
+		assert(font != nullptr);
+		_impl = std::make_unique<Impl>(font, pointSize);
+	}
+
+	Font::Font(Font&&) noexcept = default;
+
+	Font& Font::operator=(Font&&) = default;
+
+	Font::~Font() = default;
+	ImageData Font::renderGlyph(Letter letter, const Color& color) const
+	{
+		return _impl->renderGlyph(letter, color);
+	}
+
+}
