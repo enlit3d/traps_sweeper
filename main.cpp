@@ -245,8 +245,6 @@ int main(int argc, char* argv[]) {
 			models += batch.count();
 
 			fpsCounter.tick(dt);
-			//text1.setText("FPS: " + std::to_string(fpsCounter.getFPS()) + "\n" + "Entities: " + std::to_string(drawn));
-			//std::cout << trigs /2 << "," << fpsCounter.getFPS() << "\n";
 
 			render::upload(textBatch);
 			render::drawWithoutUpload(textBatch, camera);
@@ -262,34 +260,8 @@ int main(int argc, char* argv[]) {
 			glDisable(GL_CULL_FACE);
 			pic.draw(guiCamera);
 		}
-	
 
-		//console::out();
 		window.swapBuffer();
-		/*
-		{
-			auto fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-			render::opengl::checkError();
-			auto r = glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 10000000);
-			if (r != GL_CONDITION_SATISFIED) {
-				console::out("!!!!!???????????????");
-				switch (r) {
-				case GL_ALREADY_SIGNALED:
-					console::out("GL_ALREADY_SIGNALED");
-					break;
-				case GL_TIMEOUT_EXPIRED:
-					console::out("GL_TIMEOUT_EXPIRED");
-					break;
-				case GL_WAIT_FAILED:
-					console::out("GL_WAIT_FAILED");
-					break;
-				}
-
-			}
-			render::opengl::checkError();
-			glDeleteSync(fence);
-			render::opengl::checkError();
-		}*/
 
 	});
 	loop.start();
