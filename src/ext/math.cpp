@@ -100,8 +100,7 @@ namespace engine::math
 
 	
 	static SmallPRNG rng = []() { //TODO: maybe seed this better later
-		u32 seed;
-		srand(time(NULL));
+		u32 seed = time(nullptr);
 		return SmallPRNG{ seed };
 	}();;
 
